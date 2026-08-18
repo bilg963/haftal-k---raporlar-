@@ -1,0 +1,55 @@
+##LOGGING, MONITORING & DEBUGGING
+
+#Log Seviyeleri (Log Levels)
+Loglama, uygulamanın çalışırken gerçekleştirdiği işlemleri, karşılaştığı durumları ve ürettiği çıktıları zaman damgasıyla birlikte kaydetmesidir. 
+Logların okunabilirliğini ve yönetilebilirliğini artırmak için belirli önem derecelerine göre sınıflandırılırlar. En yaygın kullanılan log seviyeleri şunlardır:
+
+#INFO (Bilgilendirme)
+Uygulamanın normal işleyişine dair bilgilendirici mesajlardır. Herhangi bir soruna işaret etmezler, aksine sistemin beklendiği gibi çalıştığını doğrularlar.
+Kullanım Senaryoları: Bir servisin başarıyla başlatılması, kullanıcının sisteme başarıyla giriş yapması, bir arka plan görevinin tamamlanması veya bir API isteğinin 200 OK koduyla dönmesi.
+Örnek: [INFO] - 2026-08-19 00:05:00 - Kullanıcı (ID: 10452) sisteme başarıyla giriş yaptı.
+
+#WARN (Uyarı)
+Sistemin çalışmasını doğrudan durdurmayan ancak potansiyel bir probleme veya olağan dışı bir duruma işaret eden uyarılardır. Bu log seviyesi, ileride daha büyük hatalara yol açabilecek durumları önceden fark etmek için kritik öneme sahiptir.
+Kullanım Senaryoları: Eski (deprecated) bir API'nin kullanılması, veritabanı bağlantı süresinin beklenenden uzun sürmesi, disk alanının %80'e ulaşması veya geçersiz parametrelerle gelen hatalı istek denemeleri.
+Örnek: [WARN] - 2026-08-19 00:05:12 - Veritabanı sorgusu 800ms sürdü (Eşik değer: 500ms).
+
+#ERROR (Hata)
+Uygulamanın belirli bir işlevinin veya akışının başarısız olduğunu belirten log seviyesidir. Bir hata oluşmuştur ancak uygulama tamamen çökmemiş, çalışmaya devam ediyordur. Geliştiriciler tarafından acilen incelenmesi gerekir.
+Kullanım Senaryoları: Üçüncü taraf bir servisin yanıt vermemesi, veritabanına veri yazılamaması, dosya okuma/yazma hatası veya geçersiz kullanıcı girişi dışındaki beklenmedik çalışma zamanı hataları.
+Örnek: [ERROR] - 2026-08-19 00:06:05 - Ödeme entegrasyonu API'sinden yanıt alınamadı. Hata kodu: 503.
+
+##Hata Yönetimi (Exception Handling)
+Hata yönetimi, yazılımın çalışması sırasında oluşabilecek beklenmedik durumların (istisnaların/exceptions) öngörülerek kontrol altına alınması sürecidir. İyi yapılandırılmış bir hata yönetimi, uygulamanın çökmesini engeller ve kullanıcı deneyimini korur.
+
+Temel Yaklaşım (Try-Catch Yapısı)
+Hata oluşturma potansiyeli olan kod blokları try bloğu içine alınır. Eğer bu blokta bir hata meydana gelirse, programın akışı kesilmeden doğrudan catch (veya dile göre except/rescue) bloğuna aktarılır. Bu sayede hata kontrollü bir şekilde yönetilir.
+
+İyi Bir Hata Yönetimi İçin Altın Kurallar
+Kullanıcıya Ham Hata Göstermemek: Kullanıcı arayüzünde veritabanı hata mesajları veya sistem yığın izleri (stack trace) gibi teknik detaylar asla gösterilmemelidir. Bu durum hem kötü bir kullanıcı deneyimi yaratır hem de güvenlik açığı oluşturur. Kullanıcıya net ve yönlendirici bir hata mesajı ("Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin" gibi) gösterilmelidir.
+Teknik Detayları Arka Planda Loglamak: Kullanıcıdan gizlenen tüm teknik stack trace ve sistem detayları, geliştiricilerin inceleyebilmesi için detaylı bir şekilde ERROR seviyesinde loglanmalıdır.
+Özgün İstisnalar (Custom Exceptions) Kullanmak: Genel hata sınıfları yerine probleme özgü istisnalar tanımlamak, hatanın kaynağını tespit etmeyi hızlandırır.
+Kaynakları Güvenli Kapatmak: Hata oluşsa da oluşmasa da çalışması gereken temizlik kodları (dosya kapatma, veritabanı bağlantısı sonlandırma vb.) finally bloğu içerisinde yürütülmelidir.
+
+#İzleme (Monitoring) Neden Şarttır?
+Uygulamanın sunucuya kurulması ve çalışmaya başlaması sürecin sonu değil, canlı takibin başlangıcıdır. Monitoring (İzleme), sistemin sağlık durumunu, performansını ve kaynak tüketimini sürekli olarak gözlemleme işlemidir. Monitoring'in şart olmasının temel nedenleri şunlardır:
+
+Hataları Kullanıcıdan Önce Fark Etmek (Proaktif Yaklaşım)
+Sistemde oluşan hatalardan kullanıcıların şikayet etmesi beklenirse marka prestiji ve müşteri kaybı yaşanır. Monitoring araçları sayesinde sunucudaki bir yavaşlama, servis kesintisi veya hata oranlarındaki artış anında tespit edilir ve geliştirici ekibe otomatik uyarılar (alarm/alert) gönderilir. Hata, kullanıcılara yansımadan çözülebilir.
+
+Performans Darboğazlarını Tespit Etmek
+Uygulamanın hangi kısımlarının yavaş çalıştığı, hangi SQL sorgularının sistemi yorduğu monitoring verileriyle net olarak analiz edilir. Yanıt süreleri (latency) takip edilerek performans optimizasyonu yapılacak alanlar belirlenir.
+
+Kaynak Yönetimi ve Maliyet Optimizasyonu
+Sunucu işlemci (CPU) kullanımı, bellek (RAM) tüketimi, disk doluluğu ve ağ trafiği gibi altyapı metrikleri izlenir. Bu sayede ne zaman sunucu kapasitesinin artırılması (scaling) gerektiği veya ne zaman kaynakların boşa harcandığı tespit edilerek bulut/sunucu maliyetleri optimize edilir.
+
+İş Sürekliliği ve Güvenlik Takibi
+Anormal trafik artışları (örneğin bir DDoS saldırısı) veya başarısız giriş denemelerindeki ani yükselişler monitoring sistemleri sayesinde fark edilir. Böylece güvenlik önlemleri hızlıca devreye sokulabilir.
+
+Sonuç
+Logging, Exception Handling ve Monitoring birbirini tamamlayan bir sacayağıdır:
+
+Exception Handling ile hatalar yakalanır ve uygulamanın çökmesi engellenir.
+Logging ile bu hataların ve sistem hareketlerinin detaylı geçmişi kaydedilir.
+Monitoring ile tüm bu veriler görselleştirilir, canlı olarak izlenir ve bir sorun anında alarm üreterek müdahale süresini en aza indirir.
+Bu üç yapının eksiksiz kurulması, modern ve ölçeklenebilir yazılım projelerinin sürdürülebilirliği için vazgeçilmez bir gerekliliktir.
